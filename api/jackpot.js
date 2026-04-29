@@ -31,6 +31,28 @@ function decodeEntities(s) {
     .replace(/&nbsp;/g, ' ');
 }
 
+async function fetchEurGbpRate() {
+  try {
+    const r = await fetch(
+      'https://api.frankfurter.dev/v1/latest?from=EUR&to=GBP',
+      { headers: { Accept: 'application/json' } }
+    );
+    if (!r.ok) return null;
+    const j = await r.json();
+    const rate = j && j.rates && Number(j.rates.GBP);
+    return Number.isFinite(rate) && rate > 0 ? rate : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+// "€40 Million" -> {n: 40, unit: 'Million'}
+function parseAmount(s) {
+  const m = s.match(/(\d+(?:\.\d+)?)\s*(Million|Billion)?/i);
+  if (!m) return null;
+  return { n: Number(m[1]), unit: m[2] || '' };
+}
+
 export default async function handler(req, res) {
   try {
     const response = await fetch('https://www.euro-millions.com/', {
@@ -47,15 +69,29 @@ export default async function handler(req, res) {
 
     const html = await response.text();
 
-    // Prefer the GBP figure (target user is in the UK). Fall back to the first
-    // class="jackpot" match (usually the EUR headline) if no £ is shown.
+    // Prefer a £ figure if the source served one to us; otherwise convert EUR->GBP
+    // using the live frankfurter.dev rate. (euro-millions.com geo-localises currency
+    // by request IP — Vercel's region usually sees €, the user wants £.)
     const allJackpots = [...html.matchAll(/class="jackpot"[^>]*>([^<]+)</gi)]
       .map(m => decodeEntities(m[1]).trim())
       .filter(Boolean);
     if (!allJackpots.length) {
       throw new Error('Could not find jackpot figure in source HTML');
     }
-    const amount = allJackpots.find(s => s.includes('£')) || allJackpots[0];
+    const gbpDirect = allJackpots.find(s => s.includes('£'));
+    let amount = gbpDirect || allJackpots[0];
+
+    if (!gbpDirect && amount.includes('€')) {
+      const parsed = parseAmount(amount);
+      const rate = await fetchEurGbpRate();
+      if (parsed && rate) {
+        const gbp = parsed.n * rate;
+        // Round headline to nearest whole million for legibility (matches the
+        // site convention).
+        const rounded = parsed.unit ? Math.round(gbp) : Math.round(gbp);
+        amount = `£${rounded}${parsed.unit ? ' ' + parsed.unit : ''}`;
+      }
+    }
 
     // "Friday's estimated EuroMillions jackpot" or "Tuesday's ..."
     const dayMatch = html.match(/(Tuesday|Friday)'s estimated EuroMillions jackpot/i);
