@@ -137,42 +137,45 @@
     .next-jackpot-amount { font-size: clamp(28px, 8vw, 38px); font-weight: 900; color: var(--gold); letter-spacing: 1px; line-height: 1.1; }
 
     /* DRAW DETAILS (collapsible) */
-    .draw-details { margin-top: 12px; }
+    .draw-details { margin-top: 12px; border-top: 1px solid var(--border); }
     .draw-details > summary {
       list-style: none;
       cursor: pointer;
+      padding: 10px 4px 4px;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .draw-details > summary::-webkit-details-marker { display: none; }
+    .summary-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
       font-size: 12px;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 2px;
       color: var(--muted);
-      padding: 8px 10px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
     }
-    .draw-details > summary::-webkit-details-marker { display: none; }
-    .draw-details > summary::after {
+    .summary-row::after {
       content: '▾';
       font-size: 14px;
       color: var(--muted);
       transition: transform 0.18s ease;
     }
-    .draw-details[open] > summary::after { transform: rotate(180deg); }
+    .draw-details[open] .summary-row::after { transform: rotate(180deg); }
     .winner-pill {
-      display: inline-block;
-      padding: 2px 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
       border-radius: 999px;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 900;
       letter-spacing: 1.5px;
       text-transform: uppercase;
     }
-    .winner-pill.yes { background: rgba(255, 215, 0, 0.15); color: var(--gold); border: 1px solid var(--gold-dim); }
+    .winner-pill.yes { background: rgba(255, 215, 0, 0.18); color: var(--gold); border: 1px solid var(--gold-dim); }
     .winner-pill.no  { background: rgba(107, 116, 132, 0.15); color: var(--muted); border: 1px solid var(--border); }
     .prize-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
     .prize-table th, .prize-table td {
@@ -236,8 +239,8 @@
       navigator.serviceWorker.register('/sw.js').catch(console.warn);
     }
 
-    const LS_DATA  = 'em_draws_v1';
-    const LS_UNTIL = 'em_draws_until_v1';
+    const LS_DATA  = 'em_draws_v2';
+    const LS_UNTIL = 'em_draws_until_v2';
     const LS_JACKPOT = 'em_jackpot_v1';
     const LS_FX = 'em_eurgbp_v1';
 
@@ -414,18 +417,18 @@
         </table>`;
     }
 
+    function renderWinnerPill(hasWinner) {
+      if (hasWinner === true)  return '<span class="winner-pill yes">★ Jackpot Won</span>';
+      if (hasWinner === false) return '<span class="winner-pill no">Rollover</span>';
+      return '';
+    }
+
     function renderDetails(draw) {
-      const hasInfo = draw.has_winner !== null || (draw.prizes && draw.prizes.length);
-      if (!hasInfo) return '';
-      const pill = draw.has_winner === true
-        ? '<span class="winner-pill yes">Jackpot Won</span>'
-        : draw.has_winner === false
-          ? '<span class="winner-pill no">Rollover</span>'
-          : '';
+      if (!draw.prizes || !draw.prizes.length) return '';
       return `
         <details class="draw-details">
-          <summary><span>${pill || 'Prize Breakdown'}</span></summary>
-          ${draw.prizes && draw.prizes.length ? renderPrizeTable(draw.prizes) : ''}
+          <summary><div class="summary-row"><span>Prize Breakdown</span></div></summary>
+          ${renderPrizeTable(draw.prizes)}
         </details>`;
     }
 
@@ -437,6 +440,7 @@
           <div class="draw-meta">
             ${isLatest ? '<span class="draw-badge">Latest Draw</span>' : ''}
             <span class="draw-date">${isLatest ? formatDate(draw.date) : formatDateShort(draw.date)}</span>
+            ${renderWinnerPill(draw.has_winner)}
           </div>
           ${renderBalls(draw.numbers, draw.stars, isLatest)}
           ${jackpot ? `<div class="jackpot-row">
