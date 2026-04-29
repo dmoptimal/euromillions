@@ -27,18 +27,35 @@ function nextFreshResultsTime(from = new Date()) {
   return new Date(from.getTime() + 4 * 24 * 60 * 60 * 1000);
 }
 
+async function fetchEurGbpRate() {
+  try {
+    const r = await fetch(
+      'https://api.frankfurter.dev/v1/latest?from=EUR&to=GBP',
+      { headers: { Accept: 'application/json' } }
+    );
+    if (!r.ok) return null;
+    const j = await r.json();
+    const rate = j && j.rates && Number(j.rates.GBP);
+    return Number.isFinite(rate) && rate > 0 ? rate : null;
+  } catch (_) {
+    return null;
+  }
+}
+
 export default async function handler(req, res) {
   try {
-    const response = await fetch(
-      'https://euromillions.api.pedromealha.dev/v1/draws',
-      { headers: { 'Accept': 'application/json' } }
-    );
+    const [drawsRes, gbpRate] = await Promise.all([
+      fetch('https://euromillions.api.pedromealha.dev/v1/draws', {
+        headers: { Accept: 'application/json' },
+      }),
+      fetchEurGbpRate(),
+    ]);
 
-    if (!response.ok) {
-      throw new Error(`EuroMillions API responded with status ${response.status}`);
+    if (!drawsRes.ok) {
+      throw new Error(`EuroMillions API responded with status ${drawsRes.status}`);
     }
 
-    const data = await response.json();
+    const data = await drawsRes.json();
     // Upstream returns either an array or an object map keyed by index, including
     // every draw since 2004 (~2MB). Slice to the most recent 5 before responding.
     const all = Array.isArray(data) ? data : Object.values(data);
@@ -51,7 +68,11 @@ export default async function handler(req, res) {
     const ttl = Math.max(300, Math.floor((cacheUntil - new Date()) / 1000));
 
     res.setHeader('Cache-Control', `public, s-maxage=${ttl}, stale-while-revalidate=60`);
-    res.status(200).json({ draws, cache_until: cacheUntil.toISOString() });
+    res.status(200).json({
+      draws,
+      gbp_rate: gbpRate, // null if FX lookup failed; client falls back to EUR
+      cache_until: cacheUntil.toISOString(),
+    });
 
   } catch (error) {
     console.error('EuroMillions proxy error:', error.message);

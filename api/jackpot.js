@@ -47,12 +47,15 @@ export default async function handler(req, res) {
 
     const html = await response.text();
 
-    // <... class="jackpot">&pound;34 Million<...>  — first match is the headline figure
-    const jackpotMatch = html.match(/class="jackpot"[^>]*>([^<]+)</i);
-    if (!jackpotMatch) {
+    // Prefer the GBP figure (target user is in the UK). Fall back to the first
+    // class="jackpot" match (usually the EUR headline) if no £ is shown.
+    const allJackpots = [...html.matchAll(/class="jackpot"[^>]*>([^<]+)</gi)]
+      .map(m => decodeEntities(m[1]).trim())
+      .filter(Boolean);
+    if (!allJackpots.length) {
       throw new Error('Could not find jackpot figure in source HTML');
     }
-    const amount = decodeEntities(jackpotMatch[1]).trim();
+    const amount = allJackpots.find(s => s.includes('£')) || allJackpots[0];
 
     // "Friday's estimated EuroMillions jackpot" or "Tuesday's ..."
     const dayMatch = html.match(/(Tuesday|Friday)'s estimated EuroMillions jackpot/i);
