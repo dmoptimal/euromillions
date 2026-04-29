@@ -1,4 +1,4 @@
-const CACHE_NAME = 'euromillions-shell-v4';
+const CACHE_NAME = 'euromillions-shell-v5';
 const SHELL_URLS = ['/', '/index.html', '/manifest.json'];
 
 self.addEventListener('install', event => {

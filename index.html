@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="EuroMillions" />
-  <meta name="theme-color" content="#0d1117" />
+  <meta name="theme-color" content="#f6f1e6" />
   <title>EuroMillions Results</title>
   <link rel="manifest" href="/manifest.json" />
   <link rel="apple-touch-icon" href="/icon-192.png" />
@@ -18,21 +18,26 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #0d1117;
-      --card:      #161b27;
-      --border:    #252d3d;
-      --gold:      #ffd700;
-      --gold-dim:  #c9a800;
-      --star-bg:   #2563eb;
+      --bg:        #f6f1e6;   /* warm cream — easier on aged eyes than pure white */
+      --card:      #ffffff;
+      --card-shadow: 0 2px 8px rgba(35, 25, 10, 0.08);
+      --border:    #d8cfb8;
+      --gold:      #b45309;   /* dark amber — readable headline colour on cream */
+      --gold-dim:  #92400e;
+      --gold-fill: #f5b700;   /* still bright on the lottery balls */
+      --star-bg:   #1d4ed8;
       --star-text: #ffffff;
-      --ball-bg:   #ffd700;
-      --ball-text: #111111;
-      --text:      #e8eaf0;
-      --muted:     #6b7484;
-      --error:     #ff5252;
-      --warn-bg:     #f59e0b;
+      --ball-bg:   #fcd34d;
+      --ball-text: #1a1a1a;
+      --text:      #1a1a1a;
+      --text-soft: #2d2d2d;
+      --muted:     #6b6357;
+      --error:     #b91c1c;
+      --warn-bg:     #fef3c7;
       --warn-border: #d97706;
-      --warn-text:   #1a1208;
+      --warn-text:   #78350f;
+      --success-bg: #fff4d2;
+      --success-bd: #d4a017;
     }
 
     html, body {
@@ -56,27 +61,27 @@
       display: flex; flex-direction: column; align-items: center;
       justify-content: center; flex: 1; gap: 28px; padding: 40px 24px; text-align: center;
     }
-    .loading-title { font-size: clamp(22px, 6vw, 28px); font-weight: 900; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; }
+    .loading-title { font-size: clamp(26px, 6vw, 32px); font-weight: 900; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; }
     .spinner { width: 64px; height: 64px; border: 6px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
-    .loading-label { font-size: 20px; font-weight: 700; color: var(--text); animation: pulse 1.2s ease-in-out infinite; }
+    .loading-label { font-size: 22px; font-weight: 700; color: var(--text); animation: pulse 1.2s ease-in-out infinite; }
     @keyframes spin  { to { transform: rotate(360deg); } }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 
     /* ERROR */
     #error { display: none; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 20px; padding: 40px 24px; text-align: center; }
     .error-icon  { font-size: 56px; }
-    .error-title { font-size: 22px; font-weight: 900; color: var(--error); text-transform: uppercase; letter-spacing: 1px; }
-    .error-msg   { font-size: 17px; font-weight: 700; color: var(--muted); line-height: 1.5; }
-    .retry-btn   { margin-top: 8px; padding: 16px 40px; background: var(--gold); color: #111; border: none; border-radius: 50px; font-family: 'Nunito', sans-serif; font-size: 18px; font-weight: 900; cursor: pointer; letter-spacing: 1px; }
+    .error-title { font-size: 24px; font-weight: 900; color: var(--error); text-transform: uppercase; letter-spacing: 1px; }
+    .error-msg   { font-size: 18px; font-weight: 700; color: var(--text-soft); line-height: 1.5; }
+    .retry-btn   { margin-top: 8px; padding: 16px 40px; background: var(--gold-fill); color: #1a1a1a; border: 2px solid var(--gold); border-radius: 50px; font-family: 'Nunito', sans-serif; font-size: 19px; font-weight: 900; cursor: pointer; letter-spacing: 1px; }
 
     /* RESULTS */
-    #results { display: none; flex-direction: column; flex: 1; padding: 0 16px 16px; }
+    #results { display: none; flex-direction: column; flex: 1; }
 
-    .app-header { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 20px 0 14px; }
-    .app-header-icon  { font-size: 28px; }
-    .app-header-title { font-size: clamp(20px, 5vw, 24px); font-weight: 900; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); }
+    .app-header { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 22px 0 16px; }
+    .app-header-icon  { font-size: 30px; color: var(--gold); }
+    .app-header-title { font-size: clamp(22px, 5vw, 26px); font-weight: 900; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); }
 
-    hr.divider { border: none; border-top: 1px solid var(--border); margin: 0 0 14px; }
+    hr.divider { border: none; border-top: 2px solid var(--border); margin: 0 0 18px; }
 
     /* DRAW-WINDOW WARNING BANNER */
     .draw-banner {
@@ -86,62 +91,134 @@
       border: 2px solid var(--warn-border);
       border-radius: 14px;
       padding: 16px 18px;
-      margin: 0 0 14px;
-      font-size: clamp(15px, 4.2vw, 18px);
+      margin: 0 0 18px;
+      font-size: clamp(16px, 4.2vw, 19px);
       font-weight: 800;
       line-height: 1.4;
       text-align: center;
       letter-spacing: 0.3px;
-      box-shadow: 0 4px 16px rgba(245, 158, 11, 0.35);
+      box-shadow: 0 4px 16px rgba(245, 158, 11, 0.25);
       animation: bannerPulse 2.4s ease-in-out infinite;
     }
     @keyframes bannerPulse {
-      0%, 100% { box-shadow: 0 4px 16px rgba(245, 158, 11, 0.35); }
-      50%      { box-shadow: 0 4px 22px rgba(245, 158, 11, 0.6); }
+      0%, 100% { box-shadow: 0 4px 16px rgba(245, 158, 11, 0.25); }
+      50%      { box-shadow: 0 4px 22px rgba(245, 158, 11, 0.5); }
     }
 
-    .draw-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 10px; }
-    .draw-card.latest { border-color: var(--gold-dim); }
+    .draw-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px 14px;
+      margin-bottom: 22px;        /* roomy spacing between cards */
+      box-shadow: var(--card-shadow);
+    }
+    .draw-card.latest {
+      border: 3px solid var(--gold);
+      padding: 22px 14px;
+      margin-bottom: 26px;
+      box-shadow: 0 6px 22px rgba(180, 83, 9, 0.18);
+    }
+    #results { padding: 0 14px 24px; }
 
-    .draw-meta { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
-    .draw-badge { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; color: var(--bg); background: var(--gold); padding: 3px 10px; border-radius: 20px; }
-    .draw-date  { font-size: clamp(15px, 4vw, 18px); font-weight: 700; color: var(--text); }
+    .draw-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+    .draw-badge {
+      font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px;
+      color: #1a1a1a; background: var(--gold-fill); padding: 5px 14px; border-radius: 20px;
+      border: 1px solid var(--gold-dim);
+    }
+    .draw-date  { font-size: clamp(17px, 4.4vw, 20px); font-weight: 800; color: var(--text); }
+    .latest .draw-date { font-size: clamp(19px, 5vw, 22px); }
 
-    .balls-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
-    .ball, .star { display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: 900; flex-shrink: 0; }
+    /* Balls are forced onto one line. Sizing is tuned so the row (5 numbers +
+       separator + 2 stars) fits on an iPhone 11 (414px) and an iPhone SE/12-mini
+       (375px) without wrapping. Card padding eats the rest of the viewport. */
+    .balls-row {
+      display: flex;
+      gap: 5px;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: flex-start;
+      margin-bottom: 14px;
+      width: 100%;
+    }
+    .ball, .star { display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: 900; flex: 0 0 auto; }
 
-    .latest .ball { width: clamp(46px, 11vw, 54px); height: clamp(46px, 11vw, 54px); font-size: clamp(17px, 4.5vw, 21px); background: var(--ball-bg); color: var(--ball-text); box-shadow: 0 2px 8px rgba(255,215,0,0.35); }
-    .latest .star { width: clamp(46px, 11vw, 54px); height: clamp(46px, 11vw, 54px); font-size: clamp(16px, 4vw, 19px); background: var(--star-bg); color: var(--star-text); box-shadow: 0 2px 8px rgba(37,99,235,0.35); }
-    .prev .ball { width: clamp(38px, 9vw, 44px); height: clamp(38px, 9vw, 44px); font-size: clamp(14px, 3.5vw, 17px); background: rgba(255,215,0,0.15); color: var(--gold); border: 2px solid var(--gold-dim); }
-    .prev .star { width: clamp(38px, 9vw, 44px); height: clamp(38px, 9vw, 44px); font-size: clamp(13px, 3vw, 16px); background: rgba(37,99,235,0.15); color: #60a5fa; border: 2px solid #1d4ed8; }
-    .star-separator { font-size: 18px; color: var(--border); margin: 0 2px; flex-shrink: 0; }
+    .latest .ball {
+      width: clamp(36px, 10.4vw, 56px); height: clamp(36px, 10.4vw, 56px);
+      font-size: clamp(15px, 4.4vw, 22px);
+      background: var(--ball-bg); color: var(--ball-text);
+      border: 2px solid var(--gold-dim);
+      box-shadow: 0 3px 8px rgba(180, 83, 9, 0.22);
+    }
+    .latest .star {
+      width: clamp(36px, 10.4vw, 56px); height: clamp(36px, 10.4vw, 56px);
+      font-size: clamp(13px, 4vw, 19px);
+      background: var(--star-bg); color: var(--star-text);
+      box-shadow: 0 3px 8px rgba(29, 78, 216, 0.28);
+    }
+    .prev .ball {
+      width: clamp(32px, 9.2vw, 46px); height: clamp(32px, 9.2vw, 46px);
+      font-size: clamp(13px, 3.8vw, 18px);
+      background: var(--ball-bg); color: var(--ball-text);
+      border: 1px solid var(--gold-dim);
+    }
+    .prev .star {
+      width: clamp(32px, 9.2vw, 46px); height: clamp(32px, 9.2vw, 46px);
+      font-size: clamp(11px, 3.4vw, 16px);
+      background: var(--star-bg); color: var(--star-text);
+    }
+    .star-separator {
+      font-size: 18px; color: var(--muted); margin: 0 2px;
+      flex: 0 0 auto; font-weight: 900;
+    }
 
-    .jackpot-row    { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
-    .jackpot-label  { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); }
-    .jackpot-amount { font-size: clamp(22px, 6vw, 28px); font-weight: 900; color: var(--gold); letter-spacing: 1px; }
+    .jackpot-row    { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+    .jackpot-label  { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); }
+    .jackpot-amount { font-size: clamp(24px, 6.4vw, 30px); font-weight: 900; color: var(--gold); letter-spacing: 0.5px; }
+    .latest .jackpot-amount { font-size: clamp(28px, 7.5vw, 34px); }
 
-    .section-heading { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 3px; color: var(--muted); margin: 6px 4px 10px; }
+    .section-heading {
+      font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: 3px;
+      color: var(--muted); margin: 18px 4px 14px;
+    }
 
-    /* NEXT JACKPOT CARD */
+    /* NEXT JACKPOT CARD — hero element above all results */
     .next-jackpot {
       display: none;
-      background: linear-gradient(135deg, #1a2240 0%, #0f1730 100%);
-      border: 1px solid var(--star-bg);
-      border-radius: 16px;
-      padding: 14px 18px;
-      margin: 0 0 14px;
+      background: linear-gradient(135deg, #fff8e1 0%, #ffeaa1 100%);
+      border: 3px solid var(--gold);
+      border-radius: 22px;
+      padding: 22px 18px;
+      margin: 0 0 22px;
       text-align: center;
-      box-shadow: 0 4px 18px rgba(37, 99, 235, 0.25);
+      box-shadow: 0 6px 22px rgba(180, 83, 9, 0.22);
     }
-    .next-jackpot-label  { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 3px; color: #93c5fd; margin-bottom: 6px; }
-    .next-jackpot-amount { font-size: clamp(28px, 8vw, 38px); font-weight: 900; color: var(--gold); letter-spacing: 1px; line-height: 1.1; }
+    .next-jackpot-label  {
+      font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 3px;
+      color: var(--gold-dim); margin-bottom: 8px;
+    }
+    .next-jackpot-amount {
+      font-size: clamp(40px, 11vw, 56px); font-weight: 900; color: var(--gold);
+      letter-spacing: 0.5px; line-height: 1.05;
+    }
+    .next-jackpot-rollover {
+      display: none;
+      margin-top: 10px;
+      font-size: clamp(15px, 3.8vw, 17px);
+      font-weight: 800;
+      color: var(--gold-dim);
+      letter-spacing: 0.5px;
+    }
+    .next-jackpot-rollover.show { display: block; }
+    .next-jackpot-rollover strong { color: var(--error); font-weight: 900; }
 
     /* DRAW DETAILS (collapsible) */
-    .draw-details { margin-top: 12px; border-top: 1px solid var(--border); }
+    .draw-details { margin-top: 14px; border-top: 1px solid var(--border); }
     .draw-details > summary {
       list-style: none;
       cursor: pointer;
-      padding: 10px 4px 4px;
+      padding: 12px 4px 6px;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
     }
@@ -151,7 +228,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 2px;
@@ -159,7 +236,7 @@
     }
     .summary-row::after {
       content: '▾';
-      font-size: 14px;
+      font-size: 16px;
       color: var(--muted);
       transition: transform 0.18s ease;
     }
@@ -168,30 +245,31 @@
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      padding: 3px 10px;
+      padding: 4px 12px;
       border-radius: 999px;
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 900;
       letter-spacing: 1.5px;
       text-transform: uppercase;
     }
-    .winner-pill.yes { background: rgba(255, 215, 0, 0.18); color: var(--gold); border: 1px solid var(--gold-dim); }
-    .winner-pill.no  { background: rgba(107, 116, 132, 0.15); color: var(--muted); border: 1px solid var(--border); }
-    .prize-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+    .winner-pill.yes { background: var(--success-bg); color: var(--gold-dim); border: 1.5px solid var(--success-bd); }
+    .winner-pill.no  { background: #f3eee0; color: var(--muted); border: 1.5px solid var(--border); }
+    .prize-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
     .prize-table th, .prize-table td {
-      padding: 7px 6px;
+      padding: 8px 6px;
       text-align: right;
       border-bottom: 1px solid var(--border);
     }
-    .prize-table th { color: var(--muted); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; font-size: 10px; }
+    .prize-table th { color: var(--muted); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; font-size: 11px; }
+    .prize-table td { color: var(--text); }
     .prize-table td:first-child, .prize-table th:first-child { text-align: left; }
     .prize-table tr:last-child td { border-bottom: none; }
     .prize-tier-jackpot td { color: var(--gold); font-weight: 900; }
 
-    .app-footer { margin-top: auto; padding: 10px 4px 4px; display: flex; flex-direction: column; gap: 4px; }
+    .app-footer { margin-top: auto; padding: 14px 4px 4px; display: flex; flex-direction: column; gap: 4px; }
     .footer-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-    .footer-text { font-size: 12px; color: var(--muted); font-weight: 700; }
-    .footer-next { font-size: 12px; color: var(--muted); font-weight: 700; text-align: right; }
+    .footer-text { font-size: 13px; color: var(--muted); font-weight: 700; }
+    .footer-next { font-size: 13px; color: var(--muted); font-weight: 700; text-align: right; }
   </style>
 </head>
 <body>
@@ -224,6 +302,7 @@
     <div id="next-jackpot" class="next-jackpot">
       <div class="next-jackpot-label" id="next-jackpot-label">Next Draw</div>
       <div class="next-jackpot-amount" id="next-jackpot-amount"></div>
+      <div class="next-jackpot-rollover" id="next-jackpot-rollover"></div>
     </div>
     <div id="draws-container"></div>
     <div class="app-footer">
@@ -257,6 +336,24 @@
       label.textContent = jackpot.day ? `This ${jackpot.day}` : 'Next Draw';
       amt.textContent   = jackpot.amount;
       card.style.display = 'block';
+    }
+
+    function renderRollover(streak) {
+      const el = document.getElementById('next-jackpot-rollover');
+      if (!el) return;
+      if (streak >= 2) {
+        // Two draws per week (Tue + Fri) so weeks ≈ streak / 2
+        const weeks = Math.max(1, Math.round(streak / 2));
+        const noun  = weeks === 1 ? 'week' : 'weeks';
+        el.innerHTML = `<strong>${streak}-draw rollover</strong> &middot; ~${weeks} ${noun} unwon`;
+        el.classList.add('show');
+      } else if (streak === 1) {
+        el.innerHTML = `Rolled over from last draw`;
+        el.classList.add('show');
+      } else {
+        el.classList.remove('show');
+        el.textContent = '';
+      }
     }
 
     async function loadJackpot() {
@@ -342,7 +439,19 @@
         }))
         .filter(d => d.numbers.length === 5)
         .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .slice(0, 4);
+        .slice(0, 9);
+    }
+
+    // Count consecutive most-recent draws with no jackpot winner. The user is
+    // especially interested in multi-week rollovers, so this drives the badge
+    // shown on the jackpot card.
+    function rolloverStreak(draws) {
+      let n = 0;
+      for (const d of draws) {
+        if (d.has_winner === false) n++;
+        else break;
+      }
+      return n;
     }
 
     function formatDate(s) {
@@ -459,6 +568,8 @@
         draws.slice(1).forEach((d, i) => { html += renderDraw(d, i + 1); });
       }
       container.innerHTML = html;
+
+      renderRollover(rolloverStreak(draws));
 
       document.getElementById('footer-fetched').textContent = fromCache ? 'Cached results' : 'Just updated';
       document.getElementById('footer-next').textContent =

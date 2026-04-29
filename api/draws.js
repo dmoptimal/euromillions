@@ -62,7 +62,7 @@ export default async function handler(req, res) {
     const draws = all
       .filter(d => d && d.date)
       .sort((a, b) => new Date(b.date) - new Date(a.date))
-      .slice(0, 5);
+      .slice(0, 10);
 
     const cacheUntil = nextFreshResultsTime();
     const ttl = Math.max(300, Math.floor((cacheUntil - new Date()) / 1000));
