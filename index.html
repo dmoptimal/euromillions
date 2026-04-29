@@ -122,6 +122,20 @@
 
     .section-heading { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 3px; color: var(--muted); margin: 6px 4px 10px; }
 
+    /* NEXT JACKPOT CARD */
+    .next-jackpot {
+      display: none;
+      background: linear-gradient(135deg, #1a2240 0%, #0f1730 100%);
+      border: 1px solid var(--star-bg);
+      border-radius: 16px;
+      padding: 14px 18px;
+      margin: 0 0 14px;
+      text-align: center;
+      box-shadow: 0 4px 18px rgba(37, 99, 235, 0.25);
+    }
+    .next-jackpot-label  { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 3px; color: #93c5fd; margin-bottom: 6px; }
+    .next-jackpot-amount { font-size: clamp(28px, 8vw, 38px); font-weight: 900; color: var(--gold); letter-spacing: 1px; line-height: 1.1; }
+
     .app-footer { margin-top: auto; padding: 10px 4px 4px; display: flex; flex-direction: column; gap: 4px; }
     .footer-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .footer-text { font-size: 12px; color: var(--muted); font-weight: 700; }
@@ -155,6 +169,10 @@
     <div id="draw-banner" class="draw-banner" role="alert" aria-live="polite">
       Tonight's draw is happening now &mdash; these results may not be the latest yet.
     </div>
+    <div id="next-jackpot" class="next-jackpot">
+      <div class="next-jackpot-label" id="next-jackpot-label">Next Draw</div>
+      <div class="next-jackpot-amount" id="next-jackpot-amount"></div>
+    </div>
     <div id="draws-container"></div>
     <div class="app-footer">
       <div class="footer-row">
@@ -171,6 +189,41 @@
 
     const LS_DATA  = 'em_draws_v1';
     const LS_UNTIL = 'em_draws_until_v1';
+    const LS_JACKPOT = 'em_jackpot_v1';
+
+    function renderJackpot(jackpot) {
+      if (!jackpot || !jackpot.amount) return;
+      const card  = document.getElementById('next-jackpot');
+      const label = document.getElementById('next-jackpot-label');
+      const amt   = document.getElementById('next-jackpot-amount');
+      label.textContent = jackpot.day ? `This ${jackpot.day}` : 'Next Draw';
+      amt.textContent   = jackpot.amount;
+      card.style.display = 'block';
+    }
+
+    async function loadJackpot() {
+      try {
+        const cachedRaw = localStorage.getItem(LS_JACKPOT);
+        if (cachedRaw) {
+          const cached = JSON.parse(cachedRaw);
+          if (cached && cached.cache_until && new Date(cached.cache_until) > new Date()) {
+            renderJackpot(cached);
+            return;
+          }
+        }
+      } catch (_) { /* ignore parse errors */ }
+
+      try {
+        const r = await fetch('/api/jackpot');
+        if (!r.ok) return;
+        const data = await r.json();
+        if (data.error || !data.amount) return;
+        localStorage.setItem(LS_JACKPOT, JSON.stringify(data));
+        renderJackpot(data);
+      } catch (err) {
+        console.warn('Jackpot fetch failed (non-fatal):', err);
+      }
+    }
 
     function getCached() {
       try {
@@ -480,12 +533,14 @@
       } else {
         updateDrawBanner();
       }
+      loadJackpot();
       stopDrawWindowPolling();
       if (drawWindowStartTimeout) { clearTimeout(drawWindowStartTimeout); drawWindowStartTimeout = null; }
       initDrawWatcher();
     });
 
     loadData();
+    loadJackpot();
     initDrawWatcher();
   </script>
 </body>
