@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="EuroMillions" />
+  <meta name="theme-color" content="#0d1117" />
+  <title>EuroMillions Results</title>
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d1117;
+      --card:      #161b27;
+      --border:    #252d3d;
+      --gold:      #ffd700;
+      --gold-dim:  #c9a800;
+      --star-bg:   #2563eb;
+      --star-text: #ffffff;
+      --ball-bg:   #ffd700;
+      --ball-text: #111111;
+      --text:      #e8eaf0;
+      --muted:     #6b7484;
+      --error:     #ff5252;
+      --warn-bg:     #f59e0b;
+      --warn-border: #d97706;
+      --warn-text:   #1a1208;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overscroll-behavior: none;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100dvh;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+
+    /* LOADING */
+    #loading {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; flex: 1; gap: 28px; padding: 40px 24px; text-align: center;
+    }
+    .loading-title { font-size: clamp(22px, 6vw, 28px); font-weight: 900; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; }
+    .spinner { width: 64px; height: 64px; border: 6px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    .loading-label { font-size: 20px; font-weight: 700; color: var(--text); animation: pulse 1.2s ease-in-out infinite; }
+    @keyframes spin  { to { transform: rotate(360deg); } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+    /* ERROR */
+    #error { display: none; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 20px; padding: 40px 24px; text-align: center; }
+    .error-icon  { font-size: 56px; }
+    .error-title { font-size: 22px; font-weight: 900; color: var(--error); text-transform: uppercase; letter-spacing: 1px; }
+    .error-msg   { font-size: 17px; font-weight: 700; color: var(--muted); line-height: 1.5; }
+    .retry-btn   { margin-top: 8px; padding: 16px 40px; background: var(--gold); color: #111; border: none; border-radius: 50px; font-family: 'Nunito', sans-serif; font-size: 18px; font-weight: 900; cursor: pointer; letter-spacing: 1px; }
+
+    /* RESULTS */
+    #results { display: none; flex-direction: column; flex: 1; padding: 0 16px 16px; }
+
+    .app-header { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 20px 0 14px; }
+    .app-header-icon  { font-size: 28px; }
+    .app-header-title { font-size: clamp(20px, 5vw, 24px); font-weight: 900; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); }
+
+    hr.divider { border: none; border-top: 1px solid var(--border); margin: 0 0 14px; }
+
+    /* DRAW-WINDOW WARNING BANNER */
+    .draw-banner {
+      display: none;
+      background: var(--warn-bg);
+      color: var(--warn-text);
+      border: 2px solid var(--warn-border);
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin: 0 0 14px;
+      font-size: clamp(15px, 4.2vw, 18px);
+      font-weight: 800;
+      line-height: 1.4;
+      text-align: center;
+      letter-spacing: 0.3px;
+      box-shadow: 0 4px 16px rgba(245, 158, 11, 0.35);
+      animation: bannerPulse 2.4s ease-in-out infinite;
+    }
+    @keyframes bannerPulse {
+      0%, 100% { box-shadow: 0 4px 16px rgba(245, 158, 11, 0.35); }
+      50%      { box-shadow: 0 4px 22px rgba(245, 158, 11, 0.6); }
+    }
+
+    .draw-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 10px; }
+    .draw-card.latest { border-color: var(--gold-dim); }
+
+    .draw-meta { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+    .draw-badge { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; color: var(--bg); background: var(--gold); padding: 3px 10px; border-radius: 20px; }
+    .draw-date  { font-size: clamp(15px, 4vw, 18px); font-weight: 700; color: var(--text); }
+
+    .balls-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+    .ball, .star { display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: 900; flex-shrink: 0; }
+
+    .latest .ball { width: clamp(46px, 11vw, 54px); height: clamp(46px, 11vw, 54px); font-size: clamp(17px, 4.5vw, 21px); background: var(--ball-bg); color: var(--ball-text); box-shadow: 0 2px 8px rgba(255,215,0,0.35); }
+    .latest .star { width: clamp(46px, 11vw, 54px); height: clamp(46px, 11vw, 54px); font-size: clamp(16px, 4vw, 19px); background: var(--star-bg); color: var(--star-text); box-shadow: 0 2px 8px rgba(37,99,235,0.35); }
+    .prev .ball { width: clamp(38px, 9vw, 44px); height: clamp(38px, 9vw, 44px); font-size: clamp(14px, 3.5vw, 17px); background: rgba(255,215,0,0.15); color: var(--gold); border: 2px solid var(--gold-dim); }
+    .prev .star { width: clamp(38px, 9vw, 44px); height: clamp(38px, 9vw, 44px); font-size: clamp(13px, 3vw, 16px); background: rgba(37,99,235,0.15); color: #60a5fa; border: 2px solid #1d4ed8; }
+    .star-separator { font-size: 18px; color: var(--border); margin: 0 2px; flex-shrink: 0; }
+
+    .jackpot-row    { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .jackpot-label  { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); }
+    .jackpot-amount { font-size: clamp(22px, 6vw, 28px); font-weight: 900; color: var(--gold); letter-spacing: 1px; }
+
+    .section-heading { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 3px; color: var(--muted); margin: 6px 4px 10px; }
+
+    .app-footer { margin-top: auto; padding: 10px 4px 4px; display: flex; flex-direction: column; gap: 4px; }
+    .footer-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .footer-text { font-size: 12px; color: var(--muted); font-weight: 700; }
+    .footer-next { font-size: 12px; color: var(--muted); font-weight: 700; text-align: right; }
+  </style>
+</head>
+<body>
+
+  <!-- LOADING -->
+  <div id="loading">
+    <div class="loading-title">EuroMillions</div>
+    <div class="spinner"></div>
+    <div class="loading-label">Loading latest results...</div>
+  </div>
+
+  <!-- ERROR -->
+  <div id="error">
+    <div class="error-icon">!</div>
+    <div class="error-title">Could Not Load Results</div>
+    <div class="error-msg" id="error-msg">Please check your internet connection and try again.</div>
+    <button class="retry-btn" onclick="loadData(true)">Try Again</button>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results">
+    <div class="app-header">
+      <span class="app-header-icon">*</span>
+      <span class="app-header-title">EuroMillions</span>
+    </div>
+    <hr class="divider" />
+    <div id="draw-banner" class="draw-banner" role="alert" aria-live="polite">
+      Tonight's draw is happening now &mdash; these results may not be the latest yet.
+    </div>
+    <div id="draws-container"></div>
+    <div class="app-footer">
+      <div class="footer-row">
+        <div class="footer-text" id="footer-fetched"></div>
+        <div class="footer-next"  id="footer-next"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(console.warn);
+    }
+
+    const LS_DATA  = 'em_draws_v1';
+    const LS_UNTIL = 'em_draws_until_v1';
+
+    function getCached() {
+      try {
+        const until = localStorage.getItem(LS_UNTIL);
+        if (until && Date.now() < Number(until)) {
+          const raw = localStorage.getItem(LS_DATA);
+          if (raw) return JSON.parse(raw);
+        }
+      } catch (_) {}
+      return null;
+    }
+
+    function setCached(draws, cacheUntilISO) {
+      try {
+        localStorage.setItem(LS_DATA,  JSON.stringify(draws));
+        localStorage.setItem(LS_UNTIL, String(new Date(cacheUntilISO).getTime()));
+      } catch (_) {}
+    }
+
+    function show(id) {
+      ['loading', 'error', 'results'].forEach(s => {
+        document.getElementById(s).style.display = s === id ? 'flex' : 'none';
+      });
+    }
+
+    function getNumbers(d) {
+      if (d.numbers && Array.isArray(d.numbers) && d.numbers.length)
+        return d.numbers.map(Number).sort((a, b) => a - b);
+      return [d.number_1, d.number_2, d.number_3, d.number_4, d.number_5]
+        .filter(n => n != null).map(Number).sort((a, b) => a - b);
+    }
+
+    function getStars(d) {
+      if (d.lucky_stars && Array.isArray(d.lucky_stars) && d.lucky_stars.length)
+        return d.lucky_stars.map(Number).sort((a, b) => a - b);
+      if (d.stars && Array.isArray(d.stars) && d.stars.length)
+        return d.stars.map(Number).sort((a, b) => a - b);
+      return [d.star_1, d.star_2].filter(n => n != null).map(Number).sort((a, b) => a - b);
+    }
+
+    function parseDraws(data) {
+      console.log('Raw API response:', JSON.stringify(data, null, 2));
+      let raw = [];
+      if (Array.isArray(data))              raw = data;
+      else if (Array.isArray(data.data))    raw = data.data;
+      else if (Array.isArray(data.draws))   raw = data.draws;
+      else if (Array.isArray(data.results)) raw = data.results;
+      else throw new Error('Unrecognised API response format. Check the browser console.');
+
+      return raw
+        .map(d => ({
+          date:    d.date,
+          numbers: getNumbers(d),
+          stars:   getStars(d),
+          jackpot: d.jackpot != null ? Number(d.jackpot) : null,
+        }))
+        .filter(d => d.numbers.length === 5)
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 4);
+    }
+
+    function formatDate(s) {
+      return new Date(s + 'T12:00:00').toLocaleDateString('en-GB', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+      });
+    }
+
+    function formatDateShort(s) {
+      return new Date(s + 'T12:00:00').toLocaleDateString('en-GB', {
+        weekday: 'short', day: 'numeric', month: 'short'
+      });
+    }
+
+    function formatJackpot(n) {
+      if (!n || n <= 0) return null;
+      const m = n / 1_000_000;
+      return m >= 1
+        ? `€${m % 1 === 0 ? m : m.toFixed(1)} Million`
+        : `€${Math.round(n / 1000)}K`;
+    }
+
+    function formatNextUpdate(isoString) {
+      const d = new Date(isoString);
+      const day  = d.toLocaleDateString('en-GB', { weekday: 'long' });
+      const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      return `Next update: ${day} ~${time}`;
+    }
+
+    function renderBalls(numbers, stars, isLatest) {
+      const cls = isLatest ? 'latest' : 'prev';
+      return `
+        <div class="balls-row ${cls}">
+          ${numbers.map(n => `<div class="ball">${n}</div>`).join('')}
+          <span class="star-separator">|</span>
+          ${stars.map(s => `<div class="star">★${s}</div>`).join('')}
+        </div>`;
+    }
+
+    function renderDraw(draw, index) {
+      const isLatest = index === 0;
+      const jackpot  = formatJackpot(draw.jackpot);
+      return `
+        <div class="draw-card ${isLatest ? 'latest' : 'prev'}">
+          <div class="draw-meta">
+            ${isLatest ? '<span class="draw-badge">Latest Draw</span>' : ''}
+            <span class="draw-date">${isLatest ? formatDate(draw.date) : formatDateShort(draw.date)}</span>
+          </div>
+          ${renderBalls(draw.numbers, draw.stars, isLatest)}
+          ${jackpot ? `<div class="jackpot-row">
+            <span class="jackpot-label">Jackpot</span>
+            <span class="jackpot-amount">${jackpot}</span>
+          </div>` : ''}
+        </div>`;
+    }
+
+    function renderResults(draws, cacheUntil, fromCache) {
+      const container = document.getElementById('draws-container');
+      let html = renderDraw(draws[0], 0);
+      if (draws.length > 1) {
+        html += `<div class="section-heading">Previous Draws</div>`;
+        draws.slice(1).forEach((d, i) => { html += renderDraw(d, i + 1); });
+      }
+      container.innerHTML = html;
+
+      document.getElementById('footer-fetched').textContent = fromCache ? 'Cached results' : 'Just updated';
+      document.getElementById('footer-next').textContent =
+        cacheUntil ? formatNextUpdate(cacheUntil) : 'Draws: Tue & Fri';
+    }
+
+    async function loadData(forceRefresh = false) {
+      if (!forceRefresh) {
+        const cached = getCached();
+        if (cached) {
+          const until = localStorage.getItem(LS_UNTIL);
+          renderResults(cached, until ? new Date(Number(until)).toISOString() : null, true);
+          show('results');
+          updateDrawBanner();
+          return;
+        }
+      }
+
+      show('loading');
+
+      try {
+        const response = await fetch('/api/draws');
+        if (!response.ok) throw new Error(`Server error ${response.status}.`);
+
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+
+        const draws = parseDraws(data);
+        if (!draws.length) throw new Error('No draw data was returned. Try again in a few minutes.');
+
+        setCached(draws, data.cache_until);
+        renderResults(draws, data.cache_until, false);
+        show('results');
+        updateDrawBanner();
+
+      } catch (err) {
+        console.error('Failed to load EuroMillions data:', err);
+
+        const stale = (() => {
+          try { return JSON.parse(localStorage.getItem(LS_DATA)); } catch (_) { return null; }
+        })();
+        if (stale && stale.length) {
+          renderResults(stale, null, true);
+          document.getElementById('footer-fetched').textContent = 'Showing cached data (offline?)';
+          show('results');
+          updateDrawBanner();
+          return;
+        }
+
+        document.getElementById('error-msg').textContent = err.message;
+        show('error');
+      }
+    }
+
+    /* ---------------------------------------------------------------------- *
+     * DRAW-WINDOW WATCHER
+     *
+     * While the app is open we want to:
+     *   1. Auto-refresh the cache the moment it expires (so the user never has
+     *      to close and reopen the app to see new results).
+     *   2. Show a friendly amber banner during the draw window
+     *      (Tue/Fri 20:15-20:45 UTC) IF the cached "latest draw" is not from
+     *      today, i.e. tonight's result hasn't landed yet.
+     *
+     * Outside the draw window: no banner, no polling. We schedule a one-shot
+     * timer that wakes the watcher up at the start of the next window.
+     * ---------------------------------------------------------------------- */
+
+    const DRAW_WINDOW_START_MIN = 20 * 60 + 15;  // 20:15 UTC
+    const DRAW_WINDOW_END_MIN   = 20 * 60 + 45;  // 20:45 UTC
+    const POLL_INTERVAL_MS      = 30 * 1000;
+
+    let drawWindowInterval     = null;
+    let drawWindowStartTimeout = null;
+
+    function isDrawDay(date) {
+      const day = date.getUTCDay(); // 2 = Tue, 5 = Fri
+      return day === 2 || day === 5;
+    }
+
+    function isInDrawWindow(now = new Date()) {
+      if (!isDrawDay(now)) return false;
+      const minutes = now.getUTCMinutes() + now.getUTCHours() * 60;
+      return minutes >= DRAW_WINDOW_START_MIN && minutes < DRAW_WINDOW_END_MIN;
+    }
+
+    function nextDrawWindowStart(from = new Date()) {
+      for (let i = 0; i <= 8; i++) {
+        const d = new Date(from);
+        d.setUTCDate(from.getUTCDate() + i);
+        d.setUTCHours(20, 15, 0, 0);
+        if (isDrawDay(d) && d > from) return d;
+      }
+      return null;
+    }
+
+    function todayUTCDateString() {
+      return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    }
+
+    function readCachedDraws() {
+      try { return JSON.parse(localStorage.getItem(LS_DATA)); }
+      catch (_) { return null; }
+    }
+
+    function setBanner(visible) {
+      const banner = document.getElementById('draw-banner');
+      if (!banner) return;
+      banner.style.display = visible ? 'block' : 'none';
+    }
+
+    function updateDrawBanner() {
+      if (!isInDrawWindow()) { setBanner(false); return; }
+      const cached = readCachedDraws();
+      if (!cached || !cached.length) { setBanner(false); return; }
+
+      const latestDate = String(cached[0].date).slice(0, 10);
+      const today      = todayUTCDateString();
+
+      // Show the banner only if cached "latest" is not today's draw yet.
+      setBanner(latestDate !== today);
+    }
+
+    function tickDrawWatcher() {
+      // 1. Cache expired? Auto-refresh in the background.
+      const untilRaw = localStorage.getItem(LS_UNTIL);
+      const until    = untilRaw ? Number(untilRaw) : 0;
+      if (until && Date.now() > until) {
+        loadData(true); // re-render will update the banner state
+        return;
+      }
+
+      // 2. Inside the window: keep the banner state in sync with the cache.
+      if (isInDrawWindow()) {
+        updateDrawBanner();
+        return;
+      }
+
+      // 3. Outside the window: hide banner, stop polling, schedule next start.
+      setBanner(false);
+      stopDrawWindowPolling();
+      scheduleDrawWindowStart();
+    }
+
+    function startDrawWindowPolling() {
+      if (drawWindowInterval) return;
+      drawWindowInterval = setInterval(tickDrawWatcher, POLL_INTERVAL_MS);
+      tickDrawWatcher(); // run once immediately
+    }
+
+    function stopDrawWindowPolling() {
+      if (drawWindowInterval) {
+        clearInterval(drawWindowInterval);
+        drawWindowInterval = null;
+      }
+    }
+
+    function scheduleDrawWindowStart() {
+      if (drawWindowStartTimeout) {
+        clearTimeout(drawWindowStartTimeout);
+        drawWindowStartTimeout = null;
+      }
+      const next = nextDrawWindowStart();
+      if (!next) return;
+      const ms = Math.max(0, next.getTime() - Date.now());
+      drawWindowStartTimeout = setTimeout(() => {
+        drawWindowStartTimeout = null;
+        startDrawWindowPolling();
+      }, ms);
+    }
+
+    function initDrawWatcher() {
+      if (isInDrawWindow()) startDrawWindowPolling();
+      else                  scheduleDrawWindowStart();
+    }
+
+    // If iOS suspends the page in the background and re-shows it, re-evaluate
+    // immediately so the banner / cache state is in sync with reality.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible') return;
+      const until = Number(localStorage.getItem(LS_UNTIL) || 0);
+      if (until && Date.now() > until) {
+        loadData(true);
+      } else {
+        updateDrawBanner();
+      }
+      stopDrawWindowPolling();
+      if (drawWindowStartTimeout) { clearTimeout(drawWindowStartTimeout); drawWindowStartTimeout = null; }
+      initDrawWatcher();
+    });
+
+    loadData();
+    initDrawWatcher();
+  </script>
+</body>
+</html>

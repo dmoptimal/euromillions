@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "vexp": {
+      "command": "npx",
+      "args": ["-y", "vexp-cli@2.0.12", "mcp"]
+    }
+  }
+}
