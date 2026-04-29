@@ -30,7 +30,7 @@ function nextFreshResultsTime(from = new Date()) {
 export default async function handler(req, res) {
   try {
     const response = await fetch(
-      'https://euromillions.api.pedromealha.dev/v1/draws?page=1&per_page=5',
+      'https://euromillions.api.pedromealha.dev/v1/draws',
       { headers: { 'Accept': 'application/json' } }
     );
 
@@ -39,11 +39,19 @@ export default async function handler(req, res) {
     }
 
     const data = await response.json();
+    // Upstream returns either an array or an object map keyed by index, including
+    // every draw since 2004 (~2MB). Slice to the most recent 5 before responding.
+    const all = Array.isArray(data) ? data : Object.values(data);
+    const draws = all
+      .filter(d => d && d.date)
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 5);
+
     const cacheUntil = nextFreshResultsTime();
     const ttl = Math.max(300, Math.floor((cacheUntil - new Date()) / 1000));
 
     res.setHeader('Cache-Control', `public, s-maxage=${ttl}, stale-while-revalidate=60`);
-    res.status(200).json({ ...data, cache_until: cacheUntil.toISOString() });
+    res.status(200).json({ draws, cache_until: cacheUntil.toISOString() });
 
   } catch (error) {
     console.error('EuroMillions proxy error:', error.message);

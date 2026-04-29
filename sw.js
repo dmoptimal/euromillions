@@ -1,4 +1,4 @@
-const CACHE_NAME = 'euromillions-shell-v3';
+const CACHE_NAME = 'euromillions-shell-v4';
 const SHELL_URLS = ['/', '/index.html', '/manifest.json'];
 
 self.addEventListener('install', event => {
@@ -22,6 +22,9 @@ self.addEventListener('fetch', event => {
 
   // Let API calls pass through -- staleness is managed in localStorage
   if (url.pathname.startsWith('/api/')) return;
+
+  // Cache.put() only accepts GET; skip the rest (HEAD, POST, etc.)
+  if (event.request.method !== 'GET') return;
 
   // App shell: network-first so updates land quickly; cache as fallback
   event.respondWith(
